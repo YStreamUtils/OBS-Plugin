@@ -39,7 +39,6 @@ jobs:
           ilrepack /out:./publish/$PLUGIN_DLL \
                     /lib:./temp_publish \
                     /copyattrs \
-                    /attr:./temp_publish/$PLUGIN_DLL \
                     /internalize \
                     ./temp_publish/$PLUGIN_DLL \
                     $DEPENDENCIES
