@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Release Version Tag (e.g., v1.0.0)'
+        required: true
+        type: string
 
 jobs:
   build-and-release:
@@ -16,6 +22,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set Release Tag
+        id: tag_env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ inputs.version_tag }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -24,29 +39,20 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Dotnet Publish
+      - name: Dotnet Publish Project
         run: |
-          dotnet publish OBSPlugin.csproj -c Release -o ./temp_publish
+          dotnet publish OBSPlugin.csproj -c Release -o ./publish
 
-      - name: Merge DLLs via ILRepack
+      - name: Zip Published Artifacts
         run: |
-          mkdir ./publish
-          dotnet tool install --global dotnet-ilrepack
-          
-          PLUGIN_DLL=OBSPlugin.dll
-          DEPENDENCIES=$(find ./temp_publish -name "*.dll" ! -name "$PLUGIN_DLL")
-          
-          ilrepack /out:./publish/$PLUGIN_DLL \
-                    /lib:./temp_publish \
-                    /copyattrs \
-                    /internalize \
-                    ./temp_publish/$PLUGIN_DLL \
-                    $DEPENDENCIES
+          cd ./publish
+          zip -r ../OBSPlugin.zip .
+          cd ..
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} ./publish/OBSPlugin.dll \
-            --title "Release ${{ github.ref_name }}" \
-            --notes "Automated release for tag ${{ github.ref_name }}"
+          gh release create ${{ env.TAG_NAME }} OBSPlugin.zip \
+            --title "Release ${{ env.TAG_NAME }}" \
+            --notes "Automated release via ${{ github.event_name }} (Commit: ${{ github.sha }})"
