@@ -39,7 +39,7 @@ jobs:
                     ./temp_publish/OBSPlugin.dll \
                     ./temp_publish/Microsoft.Extensions.Logging.Abstractions.dll \
                     ./temp_publish/obs-websocket-dotnet.dll \
-                    ./temp_publish/YStreamUtils.SDK.dll
+                    ./temp_publish/YStreamUtils-PluginSDK.dll
 
       - name: Create GitHub Release
         env:
