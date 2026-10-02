@@ -36,7 +36,6 @@ jobs:
             PLUGIN_DLL=OBSPlugin.dll
             DEPENDENCIES=$(find ./temp_publish -name "*.dll" ! -name "$PLUGIN_DLL")
             
-            # /lib:./temp_publish provides the reference directory required for assembly resolution
             ilrepack /out:./publish/$PLUGIN_DLL \
                       /lib:./temp_publish \
                       /attr:./temp_publish/$PLUGIN_DLL \
