@@ -5,7 +5,7 @@ using OBSWebsocketDotNet;
 
 [assembly: PluginManifest(
     "OBSPlugin", 
-    "v1.0.0", 
+    "v1.0.13", 
     "The official YStreamUtils OBS Integrations",
     "YStreamUtils",
     "OBS-Plugin",
