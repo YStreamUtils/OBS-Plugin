@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using OBSWebsocketDotNet;
 
 [assembly: PluginManifest(
-    "OBS-Plugin", 
+    "OBSPlugin", 
     "v1.0.0", 
     "The official YStreamUtils OBS Integrations",
     "YStreamUtils",
