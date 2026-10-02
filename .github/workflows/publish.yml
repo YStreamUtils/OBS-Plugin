@@ -31,7 +31,7 @@ jobs:
       - name: Merge DLLs via ILRepack
         run: |
           mkdir ./publish
-          dotnet tool install --global ILRepack.Tool
+          dotnet tool install -g dotnet-ilrepack
           
           ilrepack /out:./publish/YStreamUtils_OBSPlugin.dll \
                     /attr:./temp_publish/YStreamUtils_OBSPlugin.dll \
