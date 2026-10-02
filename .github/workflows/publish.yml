@@ -29,17 +29,20 @@ jobs:
           dotnet publish OBSPlugin.csproj -c Release -o ./temp_publish
 
       - name: Merge DLLs via ILRepack
-        run: |
-          mkdir ./publish
-          dotnet tool install -g dotnet-ilrepack
-          
-          ilrepack /out:./publish/OBSPlugin.dll \
-                    /attr:./temp_publish/OBSPlugin.dll \
-                    /internalize \
-                    ./temp_publish/OBSPlugin.dll \
-                    ./temp_publish/Microsoft.Extensions.Logging.Abstractions.dll \
-                    ./temp_publish/obs-websocket-dotnet.dll \
-                    ./temp_publish/YStreamUtils-PluginSDK.dll
+          run: |
+            mkdir ./publish
+            dotnet tool install --global dotnet-ilrepack
+            
+            PLUGIN_DLL=OBSPlugin.dll
+            DEPENDENCIES=$(find ./temp_publish -name "*.dll" ! -name "$PLUGIN_DLL")
+            
+            # /lib:./temp_publish provides the reference directory required for assembly resolution
+            ilrepack /out:./publish/$PLUGIN_DLL \
+                      /lib:./temp_publish \
+                      /attr:./temp_publish/$PLUGIN_DLL \
+                      /internalize \
+                      ./temp_publish/$PLUGIN_DLL \
+                      $DEPENDENCIES
 
       - name: Create GitHub Release
         env:
