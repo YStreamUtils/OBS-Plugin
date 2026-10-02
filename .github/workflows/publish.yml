@@ -26,7 +26,7 @@ jobs:
 
       - name: Dotnet Publish
         run: |
-          dotnet publish YStreamUtils-OBSPlugin.csproj -c Release -o ./temp_publish
+          dotnet publish OBSPlugin.csproj -c Release -o ./temp_publish
 
       - name: Merge DLLs via ILRepack
         run: |

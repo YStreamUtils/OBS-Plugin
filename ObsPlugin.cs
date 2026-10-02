@@ -11,9 +11,9 @@ using OBSWebsocketDotNet;
     "OBS-Plugin",
     ["network"],
     ["ysnt-yes"],
-    typeof(YStreamUtils_OBSPlugin.ObsPluginSettings))]
+    typeof(OBSPlugin.ObsPluginSettings))]
 
-namespace YStreamUtils_OBSPlugin;
+namespace OBSPlugin;
 
 public record struct ObsPluginSettings(string? ObsUrl = "ws://localhost:4455", string? Password = null);
 
