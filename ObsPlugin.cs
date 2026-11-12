@@ -1,11 +1,10 @@
-﻿using System.Text.Json;
-using YStreamUtils.SDK.Plugin;
+﻿using YStreamUtils.SDK.Plugin;
 using Microsoft.Extensions.Logging;
 using OBSWebsocketDotNet;
 
 [assembly: PluginManifest(
     "OBSPlugin", 
-    "v1.0.13", 
+    "v1.0.15", 
     "The official YStreamUtils OBS Integrations",
     "YStreamUtils",
     "OBS-Plugin",
@@ -15,31 +14,19 @@ using OBSWebsocketDotNet;
 
 namespace OBSPlugin;
 
-public record struct ObsPluginSettings(string? ObsUrl = "ws://localhost:4455", string? Password = null);
+public class ObsPluginSettings(string? obsUrl, string? password)
+{
+    public string? ObsUrl { get; set; } = obsUrl;
+    public string? Password { get; set; } = password;
+    public ObsPluginSettings() : this("ws://localhost:4455", null) { }
+}
 
-public class ObsPlugin(ILogger<ObsPlugin> logger) : IPlugin
+public class ObsPlugin(ILogger<ObsPlugin> logger) : PluginBase<ObsPluginSettings>
 {
     private OBSWebsocket _obsWebsocket = new();
-    private ObsPluginSettings _settings;
 
-    public Task SettingsUpdated(string newSettings)
+    protected override Task OnSettingsUpdatedAsync(ObsPluginSettings settings)
     {
-        try
-        {
-            var settings = JsonSerializer.Deserialize<ObsPluginSettings>(newSettings);
-            Initialize(settings);
-            return Task.CompletedTask;
-        }
-        catch (Exception exception)
-        {
-            return Task.FromException(exception);
-        }
-    }
-
-    private void Initialize(ObsPluginSettings settings)
-    {
-        _settings = settings;
-
         try
         {
             _obsWebsocket.Connected -= OnObsConnected;
@@ -57,25 +44,38 @@ public class ObsPlugin(ILogger<ObsPlugin> logger) : IPlugin
         }
 
         _obsWebsocket = new OBSWebsocket();
-
         _obsWebsocket.Connected += OnObsConnected;
         _obsWebsocket.Disconnected += OnObsDisconnected;
 
         try
         {
-            logger.LogInformation("Initiating connection to OBS Engine at: {Url}...", _settings.ObsUrl);
-            
-            _obsWebsocket.ConnectAsync(_settings.ObsUrl ?? "ws://localhost:4455", _settings.Password ?? string.Empty);
+            logger.LogInformation("Initiating connection to OBS Engine at: {Url}...", settings.ObsUrl);
+            _obsWebsocket.ConnectAsync(settings.ObsUrl ?? "ws://localhost:4455", settings.Password ?? string.Empty);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to start OBS WebSocket connection sequence.");
         }
+
+        return Task.CompletedTask;
+    }
+
+    protected override ValueTask OnDisposeAsync()
+    {
+        _obsWebsocket.Connected -= OnObsConnected;
+        _obsWebsocket.Disconnected -= OnObsDisconnected;
+
+        if (!_obsWebsocket.IsConnected) return ValueTask.CompletedTask;
+        
+        logger.LogInformation("Disconnecting OBS Engine on plugin unload...");
+        _obsWebsocket.Disconnect();
+
+        return ValueTask.CompletedTask;
     }
 
     private void OnObsConnected(object? sender, EventArgs e)
     {
-        logger.LogInformation("OBS Engine successfully connected to: {Url}", _settings.ObsUrl);
+        logger.LogInformation("OBS Engine successfully connected to: {Url}", Settings.ObsUrl);
     }
 
     private void OnObsDisconnected(object? sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
@@ -106,9 +106,8 @@ public class ObsPlugin(ILogger<ObsPlugin> logger) : IPlugin
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred fetching OBS scene collections.");
+            return [];
         }
-
-        return [];
     }
 
     public void ChangeScene(string sceneName)
